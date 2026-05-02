@@ -252,7 +252,7 @@ def render_sidebar(df):
         st.divider()
         st.markdown("""
         <div style="color:#64748b; font-size:0.8rem; text-align:center;">
-            Built with ❤️ using<br>
+            Built using<br>
             Python · Scikit-learn · Streamlit
         </div>
         """, unsafe_allow_html=True)
