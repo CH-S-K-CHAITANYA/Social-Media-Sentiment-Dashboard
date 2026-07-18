@@ -467,12 +467,19 @@ def page_live_predictor(model, vectorizer):
 def page_xquik_search(model, vectorizer):
     st.markdown("### 🌐 Xquik Live Search")
     st.markdown("Search recent X posts and score them with the trained model.")
+    st.caption('Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.')
 
     if model is None or vectorizer is None:
         st.error("Model not loaded. Run `python src/train_model.py` first.")
         return
 
-    col_query, col_limit = st.columns([3, 1])
+    col_brand, col_query, col_limit = st.columns([2, 3, 1])
+    with col_brand:
+        brand = st.text_input(
+            "Tracked Brand",
+            value="",
+            help="Label assigned to every post returned by this search.",
+        )
     with col_query:
         query = st.text_input(
             "X Search Query",
@@ -492,6 +499,7 @@ def page_xquik_search(model, vectorizer):
         try:
             st.session_state["xquik_live_posts"] = load_xquik_posts(
                 query,
+                brand,
                 int(limit),
                 model,
                 vectorizer,
