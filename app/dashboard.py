@@ -19,6 +19,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.preprocess import clean_text
+from src.xquik_source import load_xquik_posts
 
 # ──────────────────────────────────────────────
 # PAGE CONFIG
@@ -233,7 +234,7 @@ def render_sidebar(df):
         page = st.radio(
             "Navigate",
             ["🏠 Overview", "🔍 Live Predictor", "📊 Deep Analytics",
-             "🏷️ Brand Monitor", "📅 Time Analysis"],
+             "🏷️ Brand Monitor", "📅 Time Analysis", "🌐 Xquik Search"],
             label_visibility="collapsed",
         )
 
@@ -460,6 +461,74 @@ def page_live_predictor(model, vectorizer):
 
 
 # ──────────────────────────────────────────────
+# XQUIK SEARCH PAGE
+# ──────────────────────────────────────────────
+
+def page_xquik_search(model, vectorizer):
+    st.markdown("### 🌐 Xquik Live Search")
+    st.markdown("Search recent X posts and score them with the trained model.")
+    st.caption('Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.')
+
+    if model is None or vectorizer is None:
+        st.error("Model not loaded. Run `python src/train_model.py` first.")
+        return
+
+    col_brand, col_query, col_limit = st.columns([2, 3, 1])
+    with col_brand:
+        brand = st.text_input(
+            "Tracked Brand",
+            value="",
+            help="Label assigned to every post returned by this search.",
+        )
+    with col_query:
+        query = st.text_input(
+            "X Search Query",
+            value="brand feedback",
+            help="Use any X search query that Xquik supports.",
+        )
+    with col_limit:
+        limit = st.number_input(
+            "Max Posts",
+            min_value=10,
+            max_value=100,
+            value=25,
+            step=5,
+        )
+
+    if st.button("Load Live Posts", type="primary"):
+        try:
+            st.session_state["xquik_live_posts"] = load_xquik_posts(
+                query,
+                brand,
+                int(limit),
+                model,
+                vectorizer,
+            )
+        except (RuntimeError, ValueError) as exc:
+            st.error(str(exc))
+            return
+        except Exception:
+            st.error("Could not load live X posts from Xquik.")
+            return
+
+    live_df = st.session_state.get("xquik_live_posts")
+    if live_df is None:
+        st.info("Enter a query, then load live posts.")
+        return
+
+    if live_df.empty:
+        st.warning("No posts matched this query.")
+        return
+
+    page_overview(live_df)
+    st.markdown("#### Live Posts")
+    st.dataframe(
+        live_df[["text", "sentiment", "brand", "likes", "retweets", "timestamp"]],
+        use_container_width=True,
+    )
+
+
+# ──────────────────────────────────────────────
 # DEEP ANALYTICS PAGE
 # ──────────────────────────────────────────────
 
@@ -582,7 +651,7 @@ def page_brand_monitor(df):
         fig2 = px.bar(plat.reset_index().melt(id_vars="platform"),
                       x="platform", y="value", color="sentiment",
                       color_discrete_map=SENTIMENT_COLORS, height=300,
-                      title=f"{brand} — Platform Breakdown")
+                      title=f"{brand} - Platform Breakdown")
         fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)",
                            plot_bgcolor="rgba(0,0,0,0)",
                            font_color="#e2e8f0",
@@ -676,6 +745,7 @@ def main():
     elif "Deep Analytics" in page: page_deep_analytics(filtered_df)
     elif "Brand Monitor"  in page: page_brand_monitor(df)   # always use full df for brand monitor
     elif "Time"           in page: page_time_analysis(filtered_df)
+    elif "Xquik"          in page: page_xquik_search(model, vectorizer)
 
 
 if __name__ == "__main__":

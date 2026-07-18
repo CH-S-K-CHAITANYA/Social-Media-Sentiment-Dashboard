@@ -172,6 +172,23 @@ streamlit run src/dashboard.py
 
 Open `http://localhost:8501` in your browser.
 
+### Optional Live X Search
+
+The Xquik Search page can load current X posts and score them with the saved
+sentiment model. Create an API key in the Xquik dashboard, then set it before
+launching Streamlit:
+
+```bash
+export XQUIK_API_KEY="your-key"
+streamlit run main.py
+```
+
+Enter the tracked brand separately from the X search query so dashboard brand
+metrics remain meaningful. Rows without a source timestamp remain missing
+instead of being assigned the current time.
+
+Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
+
 ---
 
 ## 📊 Features
